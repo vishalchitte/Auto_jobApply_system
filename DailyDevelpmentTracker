@@ -1,0 +1,134 @@
+📋 Email Job Application System - Daily Development Tracker
+
+📅 Date: 2025-07-22
+
+✅ Completed Today
+
+🔒 User Authentication
+
+Implemented User Registration (React + Spring Boot)
+
+Profile picture upload
+
+User saved to DB with default role CANDIDATE
+
+approved set to false by default
+
+Profile picture saved with unique filename
+
+Implemented User Login Page (app/login/page.tsx)
+
+API call to Spring Boot login endpoint
+
+JWT token stored in localStorage
+
+Error handling and validation done
+
+Successful login redirects to /dashboard
+
+Integrated React Frontend with Backend:
+
+Backend: http://localhost:8080
+
+Frontend: http://localhost:3000
+
+Registration and login now fully functional with backend integration
+
+🛡️ Backend Login Endpoint
+
+POST /api/auth/login
+
+Validates email & password
+
+Checks if user is approved
+
+Generates JWT token on success
+
+Sends token + user info to frontend
+
+📁 Code Structure Aligned
+
+Created and connected:
+
+UserController
+
+UserService
+
+UserRepository
+
+DTOs and response models created as needed
+
+🟡 In Progress
+
+🔐 Route Protection (Frontend)
+
+Not yet implemented: ProtectedRoute.tsx
+
+Todo:
+
+Validate JWT on page access
+
+Redirect unauthorized users to login
+
+🖥️ Dashboard Page (/dashboard)
+
+Basic redirect in place after login
+
+Todo:
+
+Layout and menu
+
+Display logged-in user data
+
+Link to profile update / email config
+
+⏭️ Next Steps (Planned)
+
+🔐 Implement ProtectedRoute.tsx for securing dashboard & profile pages
+
+🧾 Build Dashboard layout with Tailwind UI
+
+🧑‍💼 Add Admin approval UI:
+
+/admin/unapproved-users endpoint + React view
+
+Approve/reject user functionality
+
+📝 Implement profile management (/profile)
+
+Update email/app password
+
+Custom email body
+
+Upload CV/cover letter again if needed
+
+✉️ Allow sending emails only after admin approval
+
+🔧 Logback logging fixes (file-based logging)
+
+🧪 Finalize JUnit + Mockito tests for auth
+
+☁️ Prepare for deployment (cloud-ready/Tomcat setup)
+
+📝 Notes
+
+Using Spring Boot + React (Next.js 13+)
+
+React dev server: npm run dev
+
+Email is sent only if user is approved
+
+JWT required to protect routes after login
+
+📌 File Paths
+
+React: /app/login/page.tsx, /app/signup/page.tsx
+
+Backend: UserService.java, UserController.java, UserRepository.java, AuthController.java
+
+🔚 Where We Stopped
+
+Login page implemented and tested ✅
+
+Next: Start implementing protected routes and dashboard layout.
+
