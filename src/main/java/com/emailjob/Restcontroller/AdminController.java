@@ -20,6 +20,7 @@ import com.emailjob.entity.User;
 import com.emailjob.repository.UserRepository;
 import com.emailjob.service.UserService;
 
+
 @RestController
 @RequestMapping("/admin")
 
@@ -50,7 +51,8 @@ public class AdminController {
 
 	@GetMapping("/users")
 	public List<User> getAllNormalUser() {
-		return userRepository.FindByRole("User");
+		return userRepository.findByRole("CANDIDATE");
+
 	}
 
 	@PutMapping("/delete-user/{id}")

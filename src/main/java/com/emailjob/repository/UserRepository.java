@@ -13,6 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	List<User> findByApprovedFalse();
 
-	List<User> FindByRole(String role);
+	List<User> findByRole(String role);
+
 
 }

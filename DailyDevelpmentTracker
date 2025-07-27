@@ -134,3 +134,85 @@ Next: Start implementing protected routes and dashboard layout.
 
 todays update 27-07-25 
 add to our git repo  https://github.com/vishalchitte/Auto_jobApply_system.git
+
+Date: 27 July 2025
+Developer: Vishal Chitte
+Project: Auto Job Apply System
+
+✅ 1. Admin Login Debug & Fix
+Issue Resolved: "Invalid credentials" error despite valid admin login.
+
+Fix Applied:
+
+Verified backend is returning correct response for approved users.
+
+Ensured CORS config and login API endpoint are working correctly.
+
+Fixed frontend API integration by checking error handling and response parsing.
+
+✅ 2. User Login Fix
+Issue: Approved users unable to log in via frontend.
+
+Fix Applied:
+
+Corrected role/approval check in Spring Boot backend.
+
+Verified frontend API call and ensured approved users can log in.
+
+Postman used to verify working /user/login endpoint.
+
+✅ 3. Admin Login Component Updated
+Replaced entire AdminLogin.tsx with a corrected version.
+
+Fixes Included:
+
+Proper error handling.
+
+Redirection to /admin on success.
+
+Loading spinner and form validation.
+
+✅ 4. api.ts File Audit & Enhancement
+Review Completed: AdminAPI.login and other methods.
+
+Confirmed:
+
+All endpoints are correctly structured.
+
+Login, approval, delete, and fetch users are integrated.
+
+Base URL: Fallback to http://localhost:8080 ensured.
+
+✅ 5. Final Testing (Working Features)
+✅ Admin login & dashboard redirect working
+
+✅ User login tested with Postman and frontend
+
+✅ Admin panel verified for:
+
+Login
+
+User list
+
+Approval
+
+Deletion
+
+🔄 Planned Features for Next Update
+As per your latest request, we are planning to add the following to the User Dashboard NavBar:
+
+📄 Email Template (with attachment support)
+
+📅 Scheduler (with upload & set time)
+
+💳 7-day trial logic + payment integration
+
+🔔 Notification system with bell icon
+
+⚙️ Profile Settings
+
+Subscription start date
+
+Purchase history
+
+Renew plan logic
