@@ -1,6 +1,7 @@
 package com.emailjob.Restcontroller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -60,5 +63,25 @@ public class AdminController {
 		}
 
 	}
-	
+
+	@PostMapping("/login")
+	ResponseEntity<?> adminLogin(@RequestBody User loginRequestUser) {
+		Optional<User> admin = userRepository.findByEmail(loginRequestUser.getEmail());
+		if (admin.isPresent()) {
+			User user = admin.get();
+			if (user.getPassword().equals(loginRequestUser.getPassword()) && "ADMIN".equals(user.getRole())) {
+			//	return ResponseEntity.ok("Login Succefull");
+				return ResponseEntity.ok(Map.of(
+					    "id", user.getId(),
+					    "name", user.getName(),
+					    "email", user.getEmail(),
+					    "role", user.getRole()
+					));
+			} else {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials or not an admin");
+			}
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
+	}
+
 }
