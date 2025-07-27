@@ -44,4 +44,21 @@ public class AdminController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
 		}
 	}
+
+	@GetMapping("/users")
+	public List<User> getAllNormalUser() {
+		return userRepository.FindByRole("User");
+	}
+
+	@PutMapping("/delete-user/{id}")
+	public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+		if (userRepository.existsById(id)) {
+			userRepository.deleteById(id);
+			return ResponseEntity.ok("User Deleted Succefully");
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
+		}
+
+	}
+	
 }
