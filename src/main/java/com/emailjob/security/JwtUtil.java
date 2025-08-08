@@ -1,76 +1,72 @@
 package com.emailjob.security;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+	private final String SECRET_KEY = "your_secret_key_here"; // move to config in production
+	private final long EXPIRATION_TIME = 86400000; // 1 day in ms
 
-    @Value("${jwt.expirationMs}")
-    private long jwtExpirationMs;
+	// ===================== GENERATE TOKEN =====================
+	// Custom token with id, email, role, adminId
+	public String generateToken(Long id, String email, String role, Long adminId) {
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("id", id);
+		claims.put("role", role);
+		claims.put("adminId", adminId);
+		return createToken(claims, email);
+	}
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
-    }
+	public String generateTokenWithExtraClaims(Map<String, Object> extraClaims, String username) {
+		return Jwts.builder().setClaims(extraClaims).setSubject(username)
+				.setIssuedAt(new Date(System.currentTimeMillis()))
+				.setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+				.signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
+	}
 
-    public String generateToken(Long userId, String email, String role, Long adminId) {
-        Date now = new Date();
-        Date exp = new Date(now.getTime() + jwtExpirationMs);
+	private String createToken(Map<String, Object> claims, String subject) {
+		return Jwts.builder().setClaims(claims).setSubject(subject) // here subject = email
+				.setIssuedAt(new Date(System.currentTimeMillis()))
+				.setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+				.signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
+	}
 
-        return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(exp)
-                .addClaims(Map.of(
-                    "userId", userId,
-                    "role", role,
-                    "adminId", adminId == null ? -1L : adminId
-                ))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
+	// ===================== EXTRACT EMAIL =====================
+	public String getEmailFromToken(String token) {
+		return extractClaim(token, Claims::getSubject);
+	}
 
-    public Jws<Claims> validateToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token);
-    }
+	// ===================== VALIDATE TOKEN =====================
+	public boolean validateToken(String token, UserDetails userDetails) {
+		String email = getEmailFromToken(token);
+		return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
+	}
 
-    public Claims getAllClaimsFromToken(String token) {
-        return validateToken(token).getBody();
-    }
+	// ===================== HELPER METHODS =====================
+	public Date extractExpiration(String token) {
+		return extractClaim(token, Claims::getExpiration);
+	}
 
-    public Long getUserIdFromToken(String token) {
-        Claims c = getAllClaimsFromToken(token);
-        Object v = c.get("userId");
-        if (v instanceof Integer) return ((Integer) v).longValue();
-        if (v instanceof Long) return (Long) v;
-        return Long.parseLong(v.toString());
-    }
+	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+		final Claims claims = extractAllClaims(token);
+		return claimsResolver.apply(claims);
+	}
 
-    public Long getAdminIdFromToken(String token) {
-        Claims c = getAllClaimsFromToken(token);
-        Object v = c.get("adminId");
-        if (v instanceof Integer) return ((Integer) v).longValue();
-        if (v instanceof Long) return (Long) v;
-        return Long.parseLong(v.toString());
-    }
+	private Claims extractAllClaims(String token) {
+		return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+	}
 
-    public String getEmailFromToken(String token) {
-        return getAllClaimsFromToken(token).getSubject();
-    }
-
-    public String getRoleFromToken(String token) {
-        return (String) getAllClaimsFromToken(token).get("role");
-    }
+	private boolean isTokenExpired(String token) {
+		return extractExpiration(token).before(new Date());
+	}
 }

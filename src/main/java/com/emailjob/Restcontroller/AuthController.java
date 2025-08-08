@@ -1,91 +1,84 @@
 package com.emailjob.Restcontroller;
 
-import com.emailjob.entity.Admin;
 import com.emailjob.entity.User;
 import com.emailjob.model.LoginRequest;
-import com.emailjob.repository.AdminRepository;
+import com.emailjob.model.RegisterRequest;
 import com.emailjob.repository.UserRepository;
-import com.emailjob.service.AuthService;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import com.emailjob.security.JwtUtil;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-// REST controller to handle authentication requests (register, login)
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000") // Allow frontend from React app
+@RequestMapping("/auth")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
-	@Autowired
-	private AuthService authService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-	@Autowired
-	private UserRepository userRepository;
+    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil,
+                          UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-	@Autowired
-	private AdminRepository adminRepository; // ✅ Needed for instituteId lookups
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Validated @RequestBody LoginRequest loginRequest) {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+            );
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));
+        }
 
-	/**
-	 * ✅ Registration endpoint: - Candidates/Sub-Admins must provide a valid
-	 * instituteId (links them to an Admin) - MAIN_ADMIN or ADMIN accounts don't
-	 * require an instituteId
-	 */
-	@PostMapping("/register")
-	public ResponseEntity<?> registerJson(@RequestBody User userRequest) {
-	    // Check for duplicate email
-	    if (userRepository.findByEmail(userRequest.getEmail()).isPresent()) {
-	        return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already registered");
-	    }
+        Optional<User> userOpt = userRepository.findByEmail(loginRequest.getEmail());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
 
-	    // Default values
-	    userRequest.setProfilePic("default.jpg");
-	    userRequest.setApproved(false);
-	    userRequest.setCreatedAt(LocalDateTime.now());
+        User user = userOpt.get();
 
-	    String role = userRequest.getRole().toUpperCase();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole());
+        claims.put("email", user.getEmail());
 
-	    if ("MAIN_ADMIN".equals(role)) {
-	        // Main Admin: no parent, auto-approve
-	        userRequest.setAdmin(null);
-	        userRequest.setApproved(true);
+        String token = jwtUtil.generateTokenWithExtraClaims(claims, user.getEmail());
 
-	        // Auto-generate institute ID if missing
-	        if (userRequest.getInstituteId() == null || userRequest.getInstituteId().isBlank()) {
-	            userRequest.setInstituteId("INST-" + (int) (Math.random() * 9000 + 1000));
-	        }
-	    } else {
-	        // ADMIN or CANDIDATE: must have institute ID
-	        if (userRequest.getInstituteId() == null || userRequest.getInstituteId().isBlank()) {
-	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Institute ID is required");
-	        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("email", user.getEmail());
+        response.put("role", user.getRole());
 
-	        // Find parent admin by institute ID
-	        Optional<User> parentAdminOpt = userRepository.findByInstituteId(userRequest.getInstituteId());
-	        if (parentAdminOpt.isEmpty()) {
-	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Institute ID");
-	        }
+        return ResponseEntity.ok(response);
+    }
 
-	        // Link to parent admin
-	        User parentAdmin = parentAdminOpt.get();
-	        userRequest.setAdmin(parentAdmin);
-	    }
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Validated @RequestBody RegisterRequest registerRequest) {
+        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+            return ResponseEntity.status(400).body(Map.of("error", "Email already exists"));
+        }
 
-	    userRepository.save(userRequest);
-	    return ResponseEntity.ok("User registered successfully. Awaiting approval.");
-	}
+        User user = new User();
+        user.setEmail(registerRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setRole(registerRequest.getRole());
+        userRepository.save(user);
 
-
-
-	/**
-	 * ✅ Login endpoint
-	 */
-	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-		return authService.loginUser(request);
-	}
+        return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+    }
 }
