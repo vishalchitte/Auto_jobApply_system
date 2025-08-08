@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -152,4 +153,15 @@ public class EmailServiceImpl implements EmailService {
 		logger.info("Mail service Run finished");
 		
 	}
+	public void sendInstituteIdEmail(String to, String adminName, String instituteId) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Your Institute ID Approval");
+        message.setText("Hello " + adminName + ",\n\n" +
+                "Your account has been approved by the Main Admin.\n" +
+                "Your Institute ID is: " + instituteId + "\n\n" +
+                "Please use this ID to allow your users to sign up under your account.\n\n" +
+                "Regards,\nTeam");
+        mailSender.send(message);
+    }
 }

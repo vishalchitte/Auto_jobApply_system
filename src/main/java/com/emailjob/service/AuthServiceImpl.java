@@ -1,5 +1,6 @@
 package com.emailjob.service;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		User user = new User();
-		user.setName(request.getFullName());
+		user.setFullName(request.getFullName());
 		user.setEmail(request.getEmail());
 		user.setPassword(request.getPassword());
 		user.setMobile(request.getMobile());
@@ -40,21 +41,32 @@ public class AuthServiceImpl implements AuthService {
 
 	@Override
 	public ResponseEntity<?> loginUser(LoginRequest request) {
-		Optional<User> userOpt = userRepo.findByEmail(request.getEmail());
-		if (userOpt.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User Not Found ");
-		}
+	    Optional<User> userOpt = userRepo.findByEmail(request.getEmail());
+	    if (userOpt.isEmpty()) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User Not Found");
+	    }
 
-		User user = userOpt.get();
-		if (!user.getPassword().equals(request.getPassword())) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong Password");
-		}
+	    User user = userOpt.get();
 
-		if (!user.isApproved()) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Account not approved by admin");
-		}
-		
-		return ResponseEntity.ok(user);
+	    // Password check
+	    if (!user.getPassword().equals(request.getPassword())) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong Password");
+	    }
+
+	    // Approval check
+	    if (!user.isApproved()) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Account not approved by admin");
+	    }
+
+	    // ✅ Safe response with adminId
+	    return ResponseEntity.ok(Map.of(
+	        "id", user.getId(),
+	        "name", user.getFullName(),
+	        "role", user.getRole(),
+	        "adminId", user.getAdmin().getId() // Important for multi-client filtering
+	    ));
 	}
+
+
 
 }

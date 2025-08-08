@@ -25,4 +25,5 @@ public interface EmailService {
 
 	void save(EmailLog log); // ✅ Add this
 
+	 void sendInstituteIdEmail(String to, String adminName, String instituteId);// for instituteId sent mail after admin aproved
 }

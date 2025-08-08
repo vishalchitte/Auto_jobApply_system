@@ -7,83 +7,87 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.emailjob.entity.User;
 import com.emailjob.repository.UserRepository;
-import com.emailjob.service.UserService;
-
 
 @RestController
 @RequestMapping("/admin")
-
+@CrossOrigin(origins = "http://localhost:3000") // Allow frontend access
 public class AdminController {
 
-	@Autowired
-	private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-	// API endpoint: GET /admin/unapproved-users
-	@GetMapping("/unapproved-users")
-	public List<User> getUnapprovedUsers() {
-		return userRepository.findByApprovedFalse();
-	}
+    // ✅ Get all unapproved users
+    @GetMapping("/unapproved-users")
+    public List<User> getUnapprovedUsers() {
+        return userRepository.findByApprovedFalse();
+    }
 
-	@PutMapping("/approve/{id}")
-	public ResponseEntity<String> approveUser(@PathVariable Long id) {
-		Optional<User> optionalUser = userRepository.findById(id);
+    // ✅ Approve a user by ID
+    @PutMapping("/approve/{id}")
+    public ResponseEntity<String> approveUser(@PathVariable Long id) {
+        Optional<User> optionalUser = userRepository.findById(id);
 
-		if (optionalUser.isPresent()) {
-			User user = optionalUser.get();
-			user.setApproved(true);
-			userRepository.save(user);
-			return ResponseEntity.ok("User approved successfully");
-		} else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-		}
-	}
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setApproved(true);
+            userRepository.save(user);
+            return ResponseEntity.ok("User approved successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
 
-	@GetMapping("/users")
-	public List<User> getAllNormalUser() {
-		return userRepository.findByRole("CANDIDATE");
+    // ✅ Get all normal candidate users
+    @GetMapping("/users")
+    public List<User> getAllNormalUser() {
+        return userRepository.findByRole("CANDIDATE");
+    }
 
-	}
+    // ✅ Delete a user by ID
+    @PutMapping("/delete-user/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return ResponseEntity.ok("User deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
 
-	@PutMapping("/delete-user/{id}")
-	public ResponseEntity<String> deleteUser(@PathVariable Long id) {
-		if (userRepository.existsById(id)) {
-			userRepository.deleteById(id);
-			return ResponseEntity.ok("User Deleted Succefully");
-		} else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User Not Found");
-		}
+    // ✅ Admin login (supports ADMIN and MAIN_ADMIN, plain password for now)
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody User loginRequestUser) {
+        Optional<User> userOpt = userRepository.findByEmail(loginRequestUser.getEmail());
 
-	}
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
 
-	@PostMapping("/login")
-	ResponseEntity<?> adminLogin(@RequestBody User loginRequestUser) {
-		Optional<User> admin = userRepository.findByEmail(loginRequestUser.getEmail());
-		if (admin.isPresent()) {
-			User user = admin.get();
-			if (user.getPassword().equals(loginRequestUser.getPassword()) && "ADMIN".equals(user.getRole())) {
-			//	return ResponseEntity.ok("Login Succefull");
-				return ResponseEntity.ok(Map.of(
-					    "id", user.getId(),
-					    "name", user.getName(),
-					    "email", user.getEmail(),
-					    "role", user.getRole()
-					));
-			} else {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials or not an admin");
-			}
-		}
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
-	}
+        User user = userOpt.get();
+
+        // ✅ Plain password check for now (switch to BCrypt later)
+        if (!user.getPassword().equals(loginRequestUser.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+
+        // ✅ Role-based handling (supports ADMIN, MAIN_ADMIN, CANDIDATE)
+        String role = user.getRole().toUpperCase();
+        if (!role.equals("ADMIN") && !role.equals("MAIN_ADMIN") && !role.equals("CANDIDATE")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized role");
+        }
+
+        // ✅ Success — return minimal login info
+        return ResponseEntity.ok(Map.of(
+            "id", user.getId(),
+            "name", user.getName(),
+            "email", user.getEmail(),
+            "role", user.getRole(),
+            "adminId", user.getAdmin() != null ? user.getAdmin().getId() : null
+        ));
+    }
 
 }

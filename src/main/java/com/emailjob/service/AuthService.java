@@ -1,9 +1,8 @@
 package com.emailjob.service;
 
-import org.springframework.http.ResponseEntity;
-
 import com.emailjob.model.LoginRequest;
 import com.emailjob.model.RegisterRequest;
+import org.springframework.http.ResponseEntity;
 
 /*
  * AuthService.java is a Service Layer Interface that defines business logic contracts for authentication — 
@@ -12,8 +11,7 @@ import com.emailjob.model.RegisterRequest;
 It belongs to the Service layer in the standard Spring Boot architecture:*/
 
 public interface AuthService {
+	ResponseEntity<?> registerUser(RegisterRequest req);
 
-	ResponseEntity<?> registerUser(RegisterRequest request);
-
-	ResponseEntity<?> loginUser(LoginRequest request);
+	ResponseEntity<?> loginUser(LoginRequest req);
 }

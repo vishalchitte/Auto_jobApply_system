@@ -216,3 +216,81 @@ Subscription start date
 Purchase history
 
 Renew plan logic
+
+//
+04/08/25
+Got it ✅
+I’ll prepare the Spring Boot + JWT + Security skeleton for you so tomorrow we can integrate it into your existing admin/user flow.
+
+Here’s what I’ll prepare for you:
+
+Spring Boot JWT & Security Plan
+Dependencies
+
+Spring Boot Web
+
+Spring Security
+
+JWT (jjwt library)
+
+Spring Data JPA (already in your project)
+
+Security Config
+
+Configure stateless security.
+
+Allow /auth/login, /auth/register without authentication.
+
+Protect all other /api/** routes.
+
+Add JwtAuthenticationFilter.
+
+JWT Utility
+
+Generate token with:
+
+id
+
+email
+
+role
+
+adminId (if exists)
+
+Validate token.
+
+Authentication Controller
+
+/auth/login → validate user → return token + role + adminId.
+
+/auth/register → allow new user creation.
+
+Frontend
+
+Store JWT token in localStorage.
+
+Send token in Authorization header (Bearer <token>).
+
+Decode token to get adminId & role.
+
+📌 Tomorrow’s Goal
+
+Replace your current login flow with JWT.
+
+Admin flow works automatically based on adminId from token.
+
+User can only access their own interviews.
+
+If you want, I can write the ready-to-paste code for:
+
+SecurityConfig.java
+
+JwtUtil.java
+
+JwtAuthenticationFilter.java
+
+Updated AuthController.java
+
+so you just integrate it tomorrow.
+
+Do you want me to make that code package now?
