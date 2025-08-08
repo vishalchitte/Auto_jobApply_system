@@ -89,5 +89,7 @@ public class AdminController {
             "adminId", user.getAdmin() != null ? user.getAdmin().getId() : null
         ));
     }
+    
+    
 
 }
